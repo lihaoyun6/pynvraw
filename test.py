@@ -1,4 +1,4 @@
-from pynvraw import api, NvError, get_phys_gpu, nvapi_api
+from src.pynvraw import api, NvError, get_phys_gpu, nvapi_api
 
 def main():
     print(api.get_driver_version())
@@ -68,6 +68,15 @@ def main():
         print(f'current power: {gpu.power}%')
         print(f'perf limit: {gpu.perf_limit!s}')
 
+        thermal_target=gpu.thermal_target
+        print(f'thermal target: {gpu.thermal_target!s}')
+        try:
+            gpu.thermal_target=thermal_target-1
+            gpu.thermal_target=thermal_target
+        except Exception as e:
+            print('set thermal target failed',e)
+        else:
+            print('set thermal target ok')
         '''
         mask = api.get_boost_mask(gpu.handle)
         vfp = api.get_vfp_curve(gpu.handle, mask)

@@ -140,6 +140,16 @@ class NV_GPU_THERMAL_EX(NvVersioned):
     @property
     def sensors(self):
         return tuple(x / 256.0 for x in self._sensors)
+    
+class NV_GPU_THERMAL_POLICIES_STATUS(NvVersioned):
+    class NV_GPU_THERMAL_POLICIES_STATUS_ENTRY(StrStructure):
+        _fields_ = [('controller',ctypes.c_uint32),
+                    ('value',ctypes.c_uint32),
+                    ('flags',ctypes.c_uint32)]
+    _nv_version_ = 2
+    _fields_ = [('version', ctypes.c_uint32),
+                ('count', ctypes.c_uint32),
+                ('entries', NV_GPU_THERMAL_POLICIES_STATUS_ENTRY * 4)]
 
 class NV_COOLER_TARGET(enum.IntFlag):
     NONE = 0
@@ -945,6 +955,10 @@ class NvAPI:
     NvAPI_GPU_RestoreCoolerSettings = NvMethod(0x8F6ED0FB, 'NvAPI_GPU_RestoreCoolerSettings', NvPhysicalGpu, ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32)
     NvAPI_GPU_GetPstates20 = NvMethod(0x6FF81213, 'NvAPI_GPU_GetPstates20', NvPhysicalGpu, ctypes.POINTER(NV_GPU_PERF_PSTATES20_INFO))
     NvAPI_GPU_SetPstates20 = NvMethod(0x0F4DAE6B, 'NvAPI_GPU_SetPstates20', NvPhysicalGpu, ctypes.POINTER(NV_GPU_PERF_PSTATES20_INFO))
+
+    NvAPI_GPU_GetThermalPoliciesStatus = NvMethod(0x0E9C425A1, 'NvAPI_GPU_GetThermalPoliciesStatus', NvPhysicalGpu, ctypes.POINTER(NV_GPU_THERMAL_POLICIES_STATUS))
+    NvAPI_GPU_SetThermalPoliciesStatus = NvMethod(0x034C0B13D, 'NvAPI_GPU_SetThermalPoliciesStatus', NvPhysicalGpu, ctypes.POINTER(NV_GPU_THERMAL_POLICIES_STATUS))
+
     NvAPI_GPU_ClientPowerPoliciesGetInfo = NvMethod(0x34206D86, 'NvAPI_GPU_ClientPowerPoliciesGetInfo', NvPhysicalGpu, ctypes.POINTER(NV_GPU_POWER_INFO))
     NvAPI_GPU_ClientPowerPoliciesGetStatus = NvMethod(0x70916171, 'NvAPI_GPU_ClientPowerPoliciesGetStatus', NvPhysicalGpu, ctypes.POINTER(NV_GPU_POWER_STATUS))
     NvAPI_GPU_ClientPowerPoliciesSetStatus = NvMethod(0xAD95F5ED, 'NvAPI_GPU_ClientPowerPoliciesSetStatus', NvPhysicalGpu, ctypes.POINTER(NV_GPU_POWER_STATUS))
@@ -1068,6 +1082,11 @@ class NvAPI:
     def get_power_status(self, dev: NvPhysicalGpu) -> NV_GPU_POWER_STATUS:
         value = NV_GPU_POWER_STATUS()
         self.NvAPI_GPU_ClientPowerPoliciesGetStatus(dev, ctypes.pointer(value))
+        return value
+    
+    def get_thermal_status(self,dev:NvPhysicalGpu) -> NV_GPU_THERMAL_POLICIES_STATUS:
+        value = NV_GPU_THERMAL_POLICIES_STATUS()
+        self.NvAPI_GPU_GetThermalPoliciesStatus(dev, ctypes.pointer(value))
         return value
 
     def get_topology_status(self, dev: NvPhysicalGpu) -> NV_GPU_TOPOLOGY_STATUS:

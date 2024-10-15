@@ -211,6 +211,24 @@ class Gpu:
         self.api.NvAPI_GPU_ClientPowerPoliciesSetStatus(self.handle, ctypes.pointer(status))
 
     @property
+    def thermal_target(self) ->float:
+        '''Reads thermal target limit in °C.'''
+        status = self.api.get_thermal_status(self.handle)
+        if status.count == 0:
+            return None
+        return max(e.value for e in status.entries[:status.count]) / 256
+    
+    @thermal_target.setter
+    def thermal_target(self, value: float):
+        '''Sets thermal target limit in °C.'''
+        status = self.api.get_thermal_status(self.handle)
+        for e in status.entries[:status.count]:
+            if e.controller != 0:
+                e.value = int(value * 256)
+        self.api.NvAPI_GPU_SetThermalPoliciesStatus(self.handle, ctypes.pointer(status))
+
+
+    @property
     def power(self) -> float:
         '''Reads current power consumption in %.'''
         status = self.api.get_topology_status(self.handle)
