@@ -941,6 +941,7 @@ class NvAPI:
     NvAPI_Initialize = NvMethod(0x0150E828, 'NvAPI_Initialize')
     NvAPI_Unload = NvMethod(0xD22BDD7E, 'NvAPI_Unload')
     NvAPI_EnumPhysicalGPUs = NvMethod(0xE5AC921F, 'NvAPI_EnumPhysicalGPUs', NV_ENUM_GPUS, ctypes.POINTER(ctypes.c_int))
+    NvAPI_EnumTCCPhysicalGPUs = NvMethod(0xD9930B07, 'NvAPI_EnumTCCPhysicalGPUs', NV_ENUM_GPUS, ctypes.POINTER(ctypes.c_int))
     NvAPI_SYS_GetDriverAndBranchVersion = NvMethod(0x2926AAAD, 'NvAPI_SYS_GetDriverAndBranchVersion', ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(NvAPI_ShortString))
 
     NvAPI_GPU_GetBusId = NvMethod(0x1BE0B8E5, 'NvAPI_GPU_GetBusId', NvPhysicalGpu, ctypes.POINTER(ctypes.c_uint32))
@@ -1018,10 +1019,24 @@ class NvAPI:
             self.NvAPI_EnumPhysicalGPUs(gpus, ctypes.pointer(gpuCount))
             self.__gpus = [gpus[i] for i in range(gpuCount.value)]
         return self.__gpus
+    
+    @property
+    def tcc_handles(self) -> typing.List[NvPhysicalGpu]:
+        if self.__gpus is None:
+            gpus = NV_ENUM_GPUS()
+            gpuCount = ctypes.c_int(-1)
+            self.NvAPI_EnumTCCPhysicalGPUs(gpus, ctypes.pointer(gpuCount))
+            self.__gpus = [gpus[i] for i in range(gpuCount.value)]
+        return self.__gpus
 
 
-    def get_gpu_by_bus(self, busId: int, slotId: int) -> NvPhysicalGpu:
-        for gpu in self.gpu_handles:
+    def get_gpu_by_bus(self, busId: int, slotId: int, tcc=False) -> NvPhysicalGpu:
+        gpus: List[NvPhysicalGpu] = []
+        if tcc:
+            gpus = self.tcc_handles
+        else:
+            gpus = self.gpu_handles
+        for gpu in gpus:
             devBusId = ctypes.c_uint32(0)
             devSlotId = ctypes.c_uint32(0)
             self.NvAPI_GPU_GetBusId(gpu, ctypes.pointer(devBusId))
@@ -1197,3 +1212,4 @@ class NvAPI:
         apps = PrivateActiveApplicationArray()
         self.NvAPI_GPU_QueryActiveApps(dev, apps, ctypes.pointer(count))
         return tuple(apps[:count.value])
+    
