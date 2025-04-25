@@ -994,6 +994,7 @@ class NvAPI:
     def __init__(self):
         self.NvAPI_Initialize()
         self.__gpus = None
+        self.__tccs = None
 
         version = ctypes.c_uint32(0)
         branch = NvAPI_ShortString()
@@ -1022,12 +1023,12 @@ class NvAPI:
     
     @property
     def tcc_handles(self) -> typing.List[NvPhysicalGpu]:
-        if self.__gpus is None:
+        if self.__tccs is None:
             gpus = NV_ENUM_GPUS()
             gpuCount = ctypes.c_int(-1)
             self.NvAPI_EnumTCCPhysicalGPUs(gpus, ctypes.pointer(gpuCount))
-            self.__gpus = [gpus[i] for i in range(gpuCount.value)]
-        return self.__gpus
+            self.__tccs = [gpus[i] for i in range(gpuCount.value)]
+        return self.__tccs
 
 
     def get_gpu_by_bus(self, busId: int, slotId: int, tcc=False) -> NvPhysicalGpu:
